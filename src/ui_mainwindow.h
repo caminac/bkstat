@@ -192,7 +192,8 @@ public:
         menuBar->addAction(menuXxx->menuAction());
 
         retranslateUi(MainWindow);
-        QObject::connect(actionClose, SIGNAL(activated()), MainWindow, SLOT(close()));
+        // ? error on 5.5.1
+        // QObject::connect(actionClose, SIGNAL(activated()), MainWindow, SLOT(close()));
         QObject::connect(bt_exit, SIGNAL(clicked()), MainWindow, SLOT(close()));
 
         QMetaObject::connectSlotsByName(MainWindow);
