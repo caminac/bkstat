@@ -7,6 +7,8 @@
 #define N_FIELD         5
 #define MAX_SUBST       10
 #define MAX_PLAYERS     (N_FIELD + MAX_SUBST)
+#define COACH_INDEX     (MAX_PLAYERS+1)
+#define BENCH_INDEX     (MAX_PLAYERS+2)
 #define MAX_QTR         5
 #define MAX_LEN_NAMES  20
 #define EXTRA_FOULS     3

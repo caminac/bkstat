@@ -103,6 +103,15 @@ int players::get_prev_player(int current)
     return retv;
 }
 
+std::vector<int> players::get_players_on_court()
+{
+    std::vector<int> list;
+    for( int i=0; i<N_FIELD; i++ ){
+      list.push_back(m_field[i]);
+    }
+    return list;
+}
+
 void players::on_bt_change_clicked()
 {
   int limit = get_limit();
@@ -172,7 +181,7 @@ void players::order_by_shirt_number()
   T_player_info info[5];
   int           i, j, idx_of_min, tmp, new_order[5];
 
-  for( i=0; i<5; i++ ){
+  for( i=0; i<N_FIELD; i++ ){
     info[i].index = m_field[i];
     p = registry->at(m_field[i]);
     info[i].shirt = p.number;
@@ -193,7 +202,7 @@ void players::order_by_shirt_number()
       new_order[i] = tmp;
     }
   }
-  for( i=0; i<5; i++ ){
+  for( i=0; i<N_FIELD; i++ ){
     set_button(in_buttons[i], info[new_order[i]].shirt, info[new_order[i]].fauls);
     m_field[i] = info[new_order[i]].index;
   }

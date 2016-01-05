@@ -13,6 +13,16 @@ faul_menu::faul_menu(playstat *stat, ifStore *store, players *pl, int bonus, QWi
     fauls_bonus = bonus;
     m_players = pl;
     ft_done = 0;
+    m_list.clear();
+
+    m_fauls_definitions.push_back("P");
+    m_fauls_definitions.push_back("P1");
+    m_fauls_definitions.push_back("P2");
+    m_fauls_definitions.push_back("P3");
+    m_fauls_definitions.push_back("T1");
+    m_fauls_definitions.push_back("U2");
+    m_fauls_definitions.push_back("DG");
+    m_fauls_definitions.push_back("F");
 }
 
 faul_menu::~faul_menu()
@@ -31,34 +41,40 @@ void faul_menu::FaulDetected()
     ui->bt_oreb->setVisible(false);
     ui->bt_change_on_faul->setVisible(false);
 
-    ui->rb_noft->setVisible(true);
-    ui->rb_1FT->setVisible(true);
-    ui->rb_2FT->setVisible(true);
-    ui->rb_3FT->setVisible(true);
-    ui->rb_faul_tech->setVisible(true);
-    ui->rb_faul_antisp->setVisible(true);
-    ui->rb_Espulsione->setVisible(true);
-
-    ui->bt_tech_coach_done->setVisible(true);
-    ui->bt_tech_team_done->setVisible(true);
-    ui->bt_tech_recv->setVisible(true);
-
-    ui->rb_noft->setChecked(true);
-    ui->rb_1FT->setChecked(false);
-    ui->rb_2FT->setChecked(false);
-    ui->rb_3FT->setChecked(false);
-    ui->rb_faul_tech->setChecked(false);
-    ui->rb_faul_antisp->setChecked(false);
     m_ft_on_faul = 0;
     faul_coach = false;
     faul_team = false;
 }
 
-void faul_menu::set_player(int player)
+void faul_menu::set_players()
 {
-    ui->rb_faul_tech->setChecked(false);
-    ui->rb_faul_antisp->setChecked(false);
-    m_player = player;
+    ui->cb_MyTeam->clear();
+    ui->cb_OthTeam->clear();
+    ui->cb_Faul->clear();
+    m_list = m_players->get_players_on_court();
+    for( unsigned int i=0; i<m_list.size(); i++ ){
+        QString item = QString::number( m_players->get_field_shirt(m_list[i]),10);
+        ui->cb_MyTeam->addItem(item);
+    }
+    ui->cb_MyTeam->insertItem(POS_NOBODY,"--");
+    ui->cb_MyTeam->insertItem(POS_COACH,"C");
+    ui->cb_MyTeam->insertItem(POS_BENCH,"B");
+    ui->cb_MyTeam->setCurrentIndex(POS_NOBODY);
+
+    for( unsigned int i=0; i<m_list.size(); i++ ){
+        ui->cb_OthTeam->addItem("?");
+        // ui->cb_OthTeam->setEnabled(false);
+    }
+    ui->cb_OthTeam->insertItem(POS_NOBODY,"--");
+    ui->cb_OthTeam->insertItem(POS_COACH,"C");
+    ui->cb_OthTeam->insertItem(POS_BENCH,"B");
+    ui->cb_OthTeam->setCurrentIndex(POS_NOBODY);
+
+    for (int i=0; i < m_fauls_definitions.size(); ++i){
+      ui->cb_Faul->insertItem(i,m_fauls_definitions[i].c_str());
+    }
+
+    /*
     UpdateScoreboard(ifStore::t1_ok,m_store->GetScore(ifStore::t1_ok,m_player),m_player);
     UpdateScoreboard(ifStore::t1_ko,m_store->GetScore(ifStore::t1_ko,m_player),m_player);
     UpdateScoreboard(ifStore::fl_recv,m_store->GetScore(ifStore::fl_recv,m_player),m_player);
@@ -66,12 +82,13 @@ void faul_menu::set_player(int player)
 
     QString label = "FT:" + m_store->get_perc(ifStore::t1_ok,ifStore::t1_ko,m_player);
     ui->lb_ft_perc->setText(label);
+     */
 }
 
 void faul_menu::on_bt_ft_ok_clicked()
 {
     ft_done++;
-    m_store->AddScore(ifStore::t1_ok,m_ft_author); // m_player);
+    m_store->AddScore(ifStore::t1_ok,m_ft_author,ifStore::team_A); // m_player);
     UpdateScoreboard(ifStore::t1_ok,m_store->GetScore(ifStore::t1_ok,m_ft_author),m_ft_author); // m_player);
     UpdateScoreboard(ifStore::t1_ko,m_store->GetScore(ifStore::t1_ko,m_ft_author),m_ft_author); // m_player);
     m_stat->UpdateScoreboard(ifStore::t1_ok,m_store->GetScore(ifStore::t1_ok));
@@ -89,7 +106,7 @@ void faul_menu::on_bt_ft_ok_clicked()
 void faul_menu::on_bt_ft_ko_clicked()
 {
     ft_done++;
-    m_store->AddScore(ifStore::t1_ko,m_ft_author); // m_player);
+    m_store->AddScore(ifStore::t1_ko,m_ft_author,ifStore::team_A); // m_player);
     UpdateScoreboard(ifStore::t1_ko,m_store->GetScore(ifStore::t1_ko,m_ft_author),m_ft_author); // m_player);
     m_stat->UpdateScoreboard(ifStore::t1_ko,m_store->GetScore(ifStore::t1_ko));
     m_stat->UpdateScoreboard(ifStore::val,m_store->GetScore(ifStore::val));
@@ -111,17 +128,6 @@ void faul_menu::go_to_FT()
     ui->bt_ft_ko->setVisible(true);
     ui->bt_ft_ok->setVisible(true);
     ui->bt_oreb->setVisible(true);
-
-    ui->rb_noft->setVisible(false);
-    ui->rb_1FT->setVisible(false);
-    ui->rb_2FT->setVisible(false);
-    ui->rb_3FT->setVisible(false);
-    ui->rb_faul_tech->setVisible(false);
-    ui->rb_faul_antisp->setVisible(false);
-    ui->bt_change_on_faul->setVisible(true);
-    ui->bt_tech_coach_done->setVisible(false);
-    ui->bt_tech_recv->setVisible(false);
-    ui->bt_tech_team_done->setVisible(false);
 }
 
 bool faul_menu::can_close_dialog()
@@ -181,7 +187,7 @@ void faul_menu::on_bt_oreb_clicked()
         {
             this->hide();
             int pl = m_stat->ask_player(players::author,tr(QT_TR_NOOP("who made OREB ?")),false,true);
-            m_store->AddScore(ifStore::rb_atk,pl);
+            m_store->AddScore(ifStore::rb_atk,pl,ifStore::team_A);
             m_stat->UpdateScoreboard(ifStore::rb_atk,m_store->GetScore(ifStore::rb_atk));
             m_stat->UpdateScoreboard(ifStore::val,m_store->GetScore(ifStore::val));
         }else{
@@ -211,78 +217,46 @@ void faul_menu::on_bt_change_on_faul_clicked()
     this->showNormal();
 }
 
-void faul_menu::on_rb_noft_clicked()
-{
-
-}
-
-void faul_menu::on_rb_1FT_clicked()
-{
-
-}
-
-void faul_menu::on_rb_2FT_clicked()
-{
-
-}
-
-void faul_menu::on_rb_3FT_clicked()
-{
-
-}
-
 /*******************************************************************/
 /* Falli subiti                                                    */
 /*******************************************************************/
 void faul_menu::on_bt_foul_recv_clicked()
 {
-    ft_done = 0;
-    m_ft_on_faul = get_TL();
     QMessageBox msgBox;
     QString text, text_player;
-
-    text_player = get_faul_subject();
-    if( m_ft_on_faul == TECH_FAUL ){
-        text = tr(QT_TR_NOOP("Tech faul can't be received"));
+    T_FaulDetails det;
+    if( !get_faul_details(det,faul_menu::received) ){
+        text = tr(QT_TR_NOOP("invalid selection"));
         msgBox.setText(text);
         msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.exec();
         return;
-    }else if( m_ft_on_faul == ANTISP_FAUL ){
-        text = tr(QT_TR_NOOP("Confirm unsport faul recv by ")) + text_player + "?";
-    }else if(m_ft_on_faul > 0){
-        text = tr(QT_TR_NOOP("Confirm faul (P")) + QString::number(m_ft_on_faul,10) + tr(QT_TR_NOOP(") recv by ")) + text_player + "?";
-    }else{
-        text = tr(QT_TR_NOOP("Confirm faul recv by ")) + text_player + "?";
     }
+
+    text_player = get_faul_subject(det);
+    QString ftype = m_fauls_definitions[det.foul_type].c_str();
+    text = tr(QT_TR_NOOP("Confirm faul \"")) + ftype + tr(QT_TR_NOOP("\" received by ")) + text_player + "?";
+
     msgBox.setText(text);
     msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Ok);
     int ret = msgBox.exec();
     if( ret == QMessageBox::Ok){
-        if(  m_ft_on_faul == TECH_FAUL ){
-            this->hide();
-            m_ft_author = m_stat->ask_player(players::author,tr(QT_TR_NOOP("who will throw FT?")));
-            this->show();
-        }else{
-            m_ft_author = m_player;
-        }
-        faul_received(m_ft_on_faul);
+
+        m_ft_author = det.my_data;  //m_player;
+
+        faul_received(det);
     }else{
       m_ft_on_faul = 0;
     }
-    ui->rb_faul_tech->setChecked(false);
-    ui->rb_faul_antisp->setChecked(false);
 }
 
-void faul_menu::faul_received(int type)
+void faul_menu::faul_received(T_FaulDetails det)
 {
-    if( type == TECH_FAUL || type == ANTISP_FAUL ){
-        m_ft_on_faul = 2;
-    }else{
-        m_ft_on_faul = type;
-    }
+    m_ft_on_faul = get_TL(det.foul_type);
+    m_player = det.my_data;
     ft_done = 0;
-    m_store->AddScore(ifStore::fl_recv,m_player,type);
+    m_store->AddScore(ifStore::fl_recv,m_player,det.foul_type,ifStore::team_A);
     UpdateScoreboard(ifStore::fl_recv,m_store->GetScore(ifStore::fl_recv,m_player),m_player);
     m_stat->UpdateScoreboard(ifStore::val,m_store->GetScore(ifStore::val));
     m_stat->UpdateScoreboard(ifStore::oth_fauls,m_store->GetScore(ifStore::oth_fauls));
@@ -298,40 +272,50 @@ void faul_menu::faul_received(int type)
 /*******************************************************************/
 void faul_menu::on_bt_foul_done_clicked()
 {
-    m_ft_on_faul = get_TL();
     QMessageBox msgBox;
     QString text, text_player;
-    text_player = get_faul_subject();
-    if( m_ft_on_faul == TECH_FAUL ){
-        text = tr(QT_TR_NOOP("Confirm tech faul done by ")) + text_player + "?";
-    }else if( m_ft_on_faul == ANTISP_FAUL ){
-        text = tr(QT_TR_NOOP("Confirm unsport faul done by ")) + text_player + "?";
-    }else if(m_ft_on_faul > 0){
-        text = tr("Confirm faul (P") + QString::number(m_ft_on_faul,10) + tr(QT_TR_NOOP(") done by ")) + text_player + "?";
-    }else{
-        text = tr(QT_TR_NOOP("Confirm faul done by ")) + text_player + "?";
+    T_FaulDetails det;
+    if( !get_faul_details(det,faul_menu::committed) ){
+        text = tr(QT_TR_NOOP("invalid selection"));
+        msgBox.setText(text);
+        msgBox.setStandardButtons(QMessageBox::Ok);
+        msgBox.exec();
+        return;
     }
+
+    text_player = get_faul_subject(det);
+    QString ftype = m_fauls_definitions[det.foul_type].c_str();
+    text = tr(QT_TR_NOOP("Confirm faul \"")) + ftype + tr(QT_TR_NOOP("\" done by ")) + text_player + "?";
+
     msgBox.setText(text);
     msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
     msgBox.setDefaultButton(QMessageBox::Ok);
     int ret = msgBox.exec();
     if( ret == QMessageBox::Ok){
-        faul_done(m_ft_on_faul);
+        faul_done(det);
     }
-    ui->rb_faul_tech->setChecked(false);
-    ui->rb_faul_antisp->setChecked(false);
 }
 
-void faul_menu::faul_done(int type)
+void faul_menu::faul_done(T_FaulDetails det)
 {
-    if( type == TECH_FAUL || type == ANTISP_FAUL ){
-        m_ft_on_faul = 2;
-    }else{
-        m_ft_on_faul = type;
-    }
+    m_player = det.my_data;
     int faul_count = m_store->GetScore(ifStore::fl_done,m_player);
     if( faul_count < fauls_bonus ){
-        m_store->AddScore(ifStore::fl_done,m_player,type);
+        int team = ifStore::team_A;
+        int other_team_player = -1;
+        if( det.oth_data != -1 ){
+            team = ifStore::team_B;
+            if( det.oth_data == POS_COACH ){
+                other_team_player = COACH_INDEX;
+            }else if( det.oth_data == POS_BENCH ){
+                other_team_player = BENCH_INDEX;
+            }
+        }else if( det.my_data == POS_COACH ){
+            m_player = COACH_INDEX;
+        }else if( det.my_data == POS_BENCH ){
+            m_player = BENCH_INDEX;
+        }
+        m_store->AddScore(ifStore::fl_done,m_player,team,det.foul_type,other_team_player);
         faul_count = m_store->GetScore(ifStore::fl_done,m_player);
         UpdateScoreboard(ifStore::fl_done,faul_count,m_player);
         m_stat->UpdateScoreboard(ifStore::val,m_store->GetScore(ifStore::val));
@@ -345,102 +329,158 @@ void faul_menu::faul_done(int type)
         }
     }else{
     }
-    this->hide();
+
+    m_ft_on_faul = get_TL(det.foul_type);
+    if( det.oth_data != -1 ){
+        if( det.foul_type == ifStore::faul_T ||
+            det.foul_type == ifStore::faul_F ||
+            det.foul_type == ifStore::faul_DG )
+        {
+            this->hide();
+            m_ft_author = m_stat->ask_player(players::author,tr(QT_TR_NOOP("who will throw FT?")));
+            this->show();
+            go_to_FT();
+        }else{
+            this->hide();
+        }
+    }else{
+        this->hide();
+    }
 }
 
-int faul_menu::get_TL()
+int faul_menu::get_TL(int f_type)
 {
   int rv = 0;
-  if( ui->rb_noft->isChecked() ){
-  }else if( ui->rb_1FT->isChecked() ){
-    rv = 1;
-  }else if( ui->rb_2FT->isChecked() ){
-    rv = 2;
-  }else if( ui->rb_3FT->isChecked() ){
-    rv = 3;
-  }else if( ui->rb_faul_tech->isChecked() ){
-    rv = TECH_FAUL;
-  }else if( ui->rb_faul_antisp->isChecked() ){
-    rv = ANTISP_FAUL;
-  }else if( ui->rb_Espulsione->isChecked() ){
-    rv = 2;
-  }
+
+  switch( f_type ){
+      case ifStore::faul_P:
+          rv = 0;
+          break;
+      case ifStore::faul_P1:
+          rv = 1;
+          break;
+      case ifStore::faul_P2:
+          rv = 2;
+          break;
+      case ifStore::faul_P3:
+          rv = 3;
+          break;
+      case ifStore::faul_T:
+          rv = 1;
+          break;
+      case ifStore::faul_U:
+      case ifStore::faul_DG:
+      case ifStore::faul_F:
+          rv = 2;
+          break;
+  };
   return rv;
 }
 
-QString faul_menu::get_faul_subject()
+bool faul_menu::get_faul_details(T_FaulDetails& det, int direction)
 {
-    int shirt_number = m_players->get_field_shirt(m_player);
-    QString text_player;
-    if( faul_team ){
-      text_player = tr(QT_TR_NOOP("team"));
-    }else if( faul_coach ){
-      text_player = tr(QT_TR_NOOP("coach"));
+    bool rv = false;
+    int faul_type = ui->cb_Faul->currentIndex();
+    int my_player = ui->cb_MyTeam->currentIndex();
+    int oth_player = ui->cb_OthTeam->currentIndex();
+    int last_action = m_store->GetLastAction();
+    det.foul_type = -1;
+    det.my_data = -1;
+    det.oth_data = -1;
+    if( direction == faul_menu::received ){
+        // only P and U fauls can be received
+        if( faul_type == ifStore::faul_P ||
+            faul_type == ifStore::faul_P1 ||
+            faul_type == ifStore::faul_P2 ||
+            faul_type == ifStore::faul_P3 ||
+            faul_type == ifStore::faul_U ){
+                if( my_player < N_FIELD ){
+                    bool ok=true;
+                    if( faul_type == ifStore::faul_P1 ){
+                        if( last_action != ifStore::t2_ok && last_action != ifStore::t3_ok ){
+                            ok = false;
+                        }
+                    }
+                    if( ok ){
+                        det.foul_type = faul_type;
+                        det.my_data = my_player;
+                        rv = true;
+                    }
+                }
+        }
     }else{
-      text_player = tr(QT_TR_NOOP("player ")) + QString::number(shirt_number,10);
+        if( faul_type == ifStore::faul_P ||
+            faul_type == ifStore::faul_P1 ||
+            faul_type == ifStore::faul_P2 ||
+            faul_type == ifStore::faul_P3 ||
+            faul_type == ifStore::faul_U ){
+            if( my_player < N_FIELD ){
+                det.foul_type = faul_type;
+                det.my_data = my_player;
+                rv = true;
+            }
+        }else if( faul_type == ifStore::faul_T ||
+                  faul_type == ifStore::faul_DG ||
+                  faul_type == ifStore::faul_F ){
+            if( my_player == POS_NOBODY && oth_player != POS_NOBODY ){
+                det.foul_type = faul_type;
+                det.oth_data = oth_player;
+                rv = true;
+            }else if( my_player != POS_NOBODY && oth_player == POS_NOBODY ){
+                det.foul_type = faul_type;
+                det.my_data = my_player;
+                rv = true;
+            }
+        }
+    }
+    return rv;
+}
+
+QString faul_menu::get_faul_subject(T_FaulDetails det)
+{
+    QString text_player;
+    int shirt_number = -1;
+    if( det.my_data == POS_COACH && det.foul_type == ifStore::faul_T ){
+        text_player = QT_TR_NOOP("our coach (C)");
+    }else if( det.my_data == POS_BENCH && det.foul_type == ifStore::faul_T ){
+        text_player = QT_TR_NOOP("our bench (B)");
+    }else if( det.oth_data == POS_COACH && det.foul_type == ifStore::faul_T ){
+        text_player = QT_TR_NOOP("other coach (C)");
+    }else if( det.oth_data == POS_BENCH && det.foul_type == ifStore::faul_T ){
+        text_player = QT_TR_NOOP("other bench (B)");
+    }else if( det.my_data == POS_COACH && det.foul_type == ifStore::faul_DG ){
+        text_player = QT_TR_NOOP("our coach (DG)");
+    }else if( det.oth_data == POS_COACH && det.foul_type == ifStore::faul_DG ){
+        text_player = QT_TR_NOOP("other coach (DG)");
+    }else if( det.my_data == POS_COACH && det.foul_type == ifStore::faul_F ){
+        text_player = QT_TR_NOOP("our coach (F)");
+    }else if( det.oth_data == POS_COACH && det.foul_type == ifStore::faul_F ){
+        text_player = QT_TR_NOOP("other coach (F)");
+    }else{
+        shirt_number = m_players->get_field_shirt(det.my_data);
+        text_player = tr(QT_TR_NOOP("player ")) + QString::number(shirt_number,10);
     }
     return text_player;
 }
 
-void faul_menu::on_bt_tech_recv_clicked()
+void faul_menu::on_cb_MyTeam_currentIndexChanged(int index)
 {
-    ft_done = 0;
-    m_ft_on_faul = 2;
-    m_player = MAX_PLAYERS;
-    QMessageBox msgBox;
-    QString text;
 
-    text = tr(QT_TR_NOOP("Confirm tech faul recv?"));
-    msgBox.setText(text);
-    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Ok);
-    int ret = msgBox.exec();
-    if( ret == QMessageBox::Ok){
-        this->hide();
-        m_ft_author = m_stat->ask_player(players::author,tr(QT_TR_NOOP("who will throw FT?")));
-        this->show();
-        faul_received(TECH_FAUL);
-    }
-    ui->rb_faul_tech->setChecked(false);
-    ui->rb_faul_antisp->setChecked(false);
 }
 
-void faul_menu::on_bt_tech_team_done_clicked()
+void faul_menu::on_cb_OthTeam_currentIndexChanged(int index)
 {
-    m_ft_on_faul = 2;
-    m_player = MAX_PLAYERS;
-    QMessageBox msgBox;
-    QString text, text_player;
-    text_player = tr(QT_TR_NOOP("Team"));
-    text = tr(QT_TR_NOOP("Confirm tech faul done by ")) + text_player + "?";
 
-    msgBox.setText(text);
-    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Ok);
-    int ret = msgBox.exec();
-    if( ret == QMessageBox::Ok){
-        faul_done(TECH_FAUL);
-    }
-    ui->rb_faul_tech->setChecked(false);
-    ui->rb_faul_antisp->setChecked(false);
 }
 
-void faul_menu::on_bt_tech_coach_done_clicked()
+void faul_menu::on_cb_Faul_currentIndexChanged(const QString &arg1)
 {
-    m_ft_on_faul = 2;
-    m_player = MAX_PLAYERS;
-    QMessageBox msgBox;
-    QString text, text_player;
-    text_player = tr(QT_TR_NOOP("Coach"));
-    text = tr(QT_TR_NOOP("Confirm tech faul done by ")) + text_player + "?";
-
-    msgBox.setText(text);
-    msgBox.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::Ok);
-    int ret = msgBox.exec();
-    if( ret == QMessageBox::Ok){
-        faul_done(TECH_FAUL);
+    int sel = ui->cb_Faul->currentIndex();
+    if( sel == ifStore::faul_T ||
+        sel == ifStore::faul_DG ||
+        sel == ifStore::faul_F )
+    {
+        ui->cb_MyTeam->setCurrentIndex(POS_NOBODY);
+        ui->cb_OthTeam->setCurrentIndex(POS_NOBODY);
     }
-    ui->rb_faul_tech->setChecked(false);
-    ui->rb_faul_antisp->setChecked(false);
 }

@@ -9,13 +9,16 @@
 #define F_RECV    (0)
 #define F_DONE    (1)
 
+/*
 typedef struct Y_FaulDetails{
   int no_ft, ft_1, ft_2, ft_3;
 } T_FaulDetails;
+ */
 
 typedef struct Y_ActionDesc{
   int item,
-      player_index,
+      player_index,team_index,
+      oth_team_player_index,    /*<! in case of faul recv */
       coord_x,
       coord_y,
       quarter,
@@ -72,16 +75,30 @@ public:
         my_timeout,
         oth_timeout,
     };
+    enum{
+        faul_P = 0,
+        faul_P1,
+        faul_P2,
+        faul_P3,
+        faul_T,
+        faul_U,
+        faul_DG,
+        faul_F,
+    };
+    enum{
+        team_A,
+        team_B,
+    };
 
     virtual void init_T_ActionDesc( T_ActionDesc &x) = 0;
     virtual void SetViewer(ifViewer *v) = 0;
     virtual void Reset() = 0;
     virtual void ResetQuarterFauls() = 0;
-    virtual void AddScore(int item, int player_index = 0, int p1=0, int p2=0, int q=0) = 0;
+    virtual void AddScore(int item, int player_index = 0, int team_index = ifStore::team_A, int p1=0, int p2=0, int q=0) = 0;
     virtual int  GetScore(int item) = 0;
-    virtual int  GetScore(int item, int player_index) = 0;
+    virtual int  GetScore(int item, int player_index, int team_index = ifStore::team_A) = 0;
     virtual int  GetLastAction() = 0;
-    virtual QString get_perc( int item1, int item2, int player_index ) = 0;
+    virtual QString get_perc( int item1, int item2, int player_index, int team_index = ifStore::team_A ) = 0;
     virtual T_ActionDesc GetActionForUndo() = 0;
     virtual T_ActionDesc Undo() = 0;
     virtual void store_match(QFile &data) = 0;

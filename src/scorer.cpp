@@ -60,7 +60,7 @@ void scorer::ResetQuarterFauls()
     score2[scorer::_oth_fauls] = 0;
 }
 
-void scorer::AddScore(int item, int player_index, int p1, int p2, int q)
+void scorer::AddScore(int item, int player_index, int team_index, int p1, int p2, int q)
 {
   m_last_action = item;
   if( item == ifStore::subst_out ||
@@ -124,13 +124,13 @@ void scorer::AddScore(int item, int player_index, int p1, int p2, int q)
       }
       cmd_queue.push_back(tmp);
   }else if( item == ifStore::fl_done || item == ifStore::fl_recv ){ 
-    SetScore(item, player_index, 1, p1);
+    SetScore(item, player_index, team_index, 1, p1, p2);
   }else{
-    SetScore(item, player_index, 1);
+    SetScore(item, player_index, team_index, 1);
   }
 }
 
-void scorer::SetScore(int item, int player_index, int action_sign, int param)
+void scorer::SetScore(int item, int player_index, int team_index, int action_sign, int param, int param2)
 {
     T_ActionDesc tmp;
     this->init_T_ActionDesc(tmp);
@@ -139,38 +139,29 @@ void scorer::SetScore(int item, int player_index, int action_sign, int param)
     tmp.player_index = player_index;
     bool exit = false;
 
-    switch( item ){
-        case ifStore::oth_t1:
-        score2[scorer::_oth_t1] += action_sign;
-        exit = true;
-        break;
-        case ifStore::oth_t2:
-        score2[scorer::_oth_t2] += action_sign;
-        exit = true;
-        break;
-        case ifStore::oth_t3:
-        score2[scorer::_oth_t3] += action_sign;
-        exit = true;
-        break;
-    }
-
     if( item == ifStore::fl_done || item == ifStore::fl_recv ){
       int ft = 0, faul_type = F_RECV;
+      int faul_count = 1;
       tmp.param = param;
 
       if( item == ifStore::fl_done ){
-        faul_type = F_DONE;
+        if( param2 != -1 ){
+            faul_type = F_RECV;
+        }else{
+            faul_type = F_DONE;
+        }
       }
-      if( param == TECH_FAUL || param == ANTISP_FAUL ){
-        ft = 2;
-      }else{
-        ft = param;
+      if( player_index == COACH_INDEX || player_index == BENCH_INDEX ){
+          faul_count = 0;
+      }
+      if( param2 == COACH_INDEX || param2 == BENCH_INDEX ){
+          faul_count = 0;
       }
       throws_on_fauls[player_index][faul_type][ft]++;
       if( item == ifStore::fl_done ){
-        ++score2[scorer::_my_fauls];
+        score2[scorer::_my_fauls] += faul_count;
       }else{
-        ++score2[scorer::_oth_fauls];
+        score2[scorer::_oth_fauls] += faul_count;
       }
     }
     // ! passo di qui anche in caso di undo (e non devo registrare)
@@ -187,17 +178,29 @@ void scorer::SetScore(int item, int player_index, int action_sign, int param)
             switch(item){
                 case ifStore::t1_ok:
                     upd_pts = true;
-                    score[ifStore::t1_ko][player_index][0] += action_sign;
+                    if( team_index == ifStore::team_A ){
+                        score[ifStore::t1_ko][player_index][0] += action_sign;
+                    }else{
+                        score2[scorer::_oth_t1] += action_sign;
+                    }
                     break;
                 case ifStore::t2_ok:
                     upd_pts = true;
-                    score[ifStore::t2_ko][player_index][0] += action_sign;
+                    if( team_index == ifStore::team_A ){
+                        score[ifStore::t2_ko][player_index][0] += action_sign;
+                    }else{
+                        score2[scorer::_oth_t2] += action_sign;
+                    }
                     break;
                 case ifStore::t3_ok:
                     upd_pts = true;
-                    score[ifStore::t3_ko][player_index][0] += action_sign;
+                    if( team_index == ifStore::team_A ){
+                        score[ifStore::t3_ko][player_index][0] += action_sign;
+                    }else{
+                        score2[scorer::_oth_t3] += action_sign;
+                    }
                     break;
-            }
+            }            
         }
     }else if( item == ifStore::my_timeout ||
               item == ifStore::oth_timeout ){
@@ -246,7 +249,7 @@ int scorer::GetScore(int item)
     return val;
 }
 
-int scorer::GetScore(int item, int player_index)
+int scorer::GetScore(int item, int player_index, int team_index)
 {
     int val = score[item][player_index][0];
     if( item == ifStore::points ){
@@ -302,7 +305,7 @@ T_ActionDesc scorer::Undo()
     if( !cmd_queue.empty() ){
         tmp = cmd_queue.back();
         cmd_queue.pop_back();
-        SetScore(tmp.item, tmp.player_index, -1);
+        SetScore(tmp.item, tmp.player_index, tmp.team_index, -1);
         // ripristina la penultima azione
         tmp = cmd_queue.back();
         if( tmp.item != ifStore::starting_five ){
@@ -312,7 +315,7 @@ T_ActionDesc scorer::Undo()
     return tmp;
 }
 
-QString scorer::get_perc( int item1, int item2, int player_index )
+QString scorer::get_perc( int item1, int item2, int player_index, int team_index )
 {
     QString str;
     int v1, v2;
@@ -1159,7 +1162,7 @@ void scorer::load_match(QFile &data, playstat *scoreboard)
               // il tipo di fallo o i TL sono messi nel 3o parametro
               tmp.min = list1[2].toInt(&ok, 10);
             }
-            AddScore(tmp.item,tmp.player_index,tmp.min,tmp.sec,tmp.quarter);
+            AddScore(tmp.item,tmp.player_index,tmp.team_index,tmp.min,tmp.sec,tmp.quarter);
             scoreboard->UpdateScoreboard(tmp.item,1,tmp.player_index);
         }
     } while (!line.isNull());

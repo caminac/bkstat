@@ -58,9 +58,9 @@ public:
     statistics    *m_statistic;
     dlg_options   *m_options;
     PlayTimeData  *m_time_data;
-    std::vector<T_PlayerData> players_registry;
-    int           m_field[N_FIELD];
-    int           m_substitutes[MAX_SUBST];
+    std::vector<T_PlayerData> players_registry;     /*<! registry[i] = player data */
+    int           m_field[N_FIELD];                 /*<! contains indexes i of players on the court */
+    int           m_substitutes[MAX_SUBST];         /*<! contains indexes i of players on bench */
     int           m_status;
     void          update_status();
     QString       m_current_language, m_loaded_file, m_export_dir;

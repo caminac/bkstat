@@ -5,6 +5,14 @@
 #include "ifStore.h"
 #include "players.h"
 
+#define POS_NOBODY (N_FIELD)
+#define POS_COACH (N_FIELD+1)
+#define POS_BENCH (N_FIELD+2)
+
+typedef struct Y_FaulDetails{
+  int my_data, foul_type, oth_data;
+} T_FaulDetails;
+
 class playstat;
 
 namespace Ui {
@@ -18,17 +26,25 @@ class faul_menu : public QDialog
 public:
     explicit faul_menu(playstat *stat, ifStore *store, players *pl, int bonus = 5, QWidget *parent = 0);
     ~faul_menu();
-    void set_player(int player);
+    void set_players();
     void UpdateScoreboard(int item, int value, int player_index);
     void FaulDetected();
-    int  get_TL();
+    int  get_TL(int f_type);
     void go_to_FT();
     int  m_ft_on_faul;
     bool faul_coach, faul_team;
-    void faul_done(int type);
-    void faul_received(int type);
-    QString get_faul_subject();
+    void faul_done(T_FaulDetails det);
+    void faul_received(T_FaulDetails det);
+    bool    get_faul_details(T_FaulDetails& det, int direction);
+    QString get_faul_subject(T_FaulDetails det);
     bool    can_close_dialog();
+    std::vector<int> m_list;
+    // std::map<int,std::string> m_fauls_definitions;
+    std::vector<std::string> m_fauls_definitions;
+    enum{
+        committed=11,
+        received
+    };
 
 private slots:
     void on_bt_ft_ok_clicked();
@@ -45,19 +61,11 @@ private slots:
 
     void on_bt_change_on_faul_clicked();
 
-    void on_rb_noft_clicked();
+    void on_cb_MyTeam_currentIndexChanged(int index);
 
-    void on_rb_1FT_clicked();
+    void on_cb_OthTeam_currentIndexChanged(int index);
 
-    void on_rb_2FT_clicked();
-
-    void on_rb_3FT_clicked();
-
-    void on_bt_tech_recv_clicked();
-
-    void on_bt_tech_team_done_clicked();
-
-    void on_bt_tech_coach_done_clicked();
+    void on_cb_Faul_currentIndexChanged(const QString &arg1);
 
 private:
     Ui::faul_menu *ui;

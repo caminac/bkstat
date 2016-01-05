@@ -21,6 +21,7 @@ class players : public QDialog
 public:
     explicit players(ifStore *st, std::vector<T_PlayerData> *players_registry, int field[], int substitutes[], T_GameData *game_data, PlayTimeData *time_data, QWidget *parent = 0);
     ~players();
+    std::vector<int> get_players_on_court();
     int get_author();
     int get_player_no();
     void show_in_out_players();

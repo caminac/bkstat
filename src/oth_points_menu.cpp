@@ -30,7 +30,7 @@ void oth_points_menu::on_buttonBox_accepted()
         type = ifStore::oth_t3;
     }
     if( type > 0 ){
-        m_store->AddScore(type,-1);
+        m_store->AddScore(type,-1,ifStore::team_B);
         m_stat->UpdateScoreboard(ifStore::oth_points,m_store->GetScore(ifStore::oth_points));
     }
 }

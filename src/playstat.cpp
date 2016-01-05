@@ -329,12 +329,12 @@ void playstat::on_bt_reb_def_clicked()
 void playstat::on_bt_fauls_clicked()
 {
     if( is_game_ended() ){ return; }
-    int pl = ask_player(players::faul,tr(QT_TR_NOOP("who received\nor made the faul ?")),true); // con true si avrebbe l'uscita
-    if( pl > -1 && pl < MAX_PLAYERS ){
-        m_fauls->set_player(pl);
+    //int pl = ask_player(players::faul,tr(QT_TR_NOOP("who received\nor made the faul ?")),true); // con true si avrebbe l'uscita
+    //if( pl > -1 && pl < MAX_PLAYERS ){
+        m_fauls->set_players();
         m_fauls->FaulDetected();
         m_fauls->showNormal();
-    }
+    //}
 }
 
 void playstat::on_bt_undo_clicked()

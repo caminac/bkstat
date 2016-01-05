@@ -33,16 +33,16 @@ public:
     virtual void ResetQuarterFauls();
     virtual T_ActionDesc Undo();
     virtual T_ActionDesc GetActionForUndo();
-    virtual void AddScore(int item, int player_index = 0, int p1=0, int p2=0, int q=0);
+    virtual void AddScore(int item, int player_index = 0, int team_index = ifStore::team_A, int p1=0, int p2=0, int q=0);
     virtual int  GetScore(int item);
-    virtual int  GetScore(int item, int player_index);
+    virtual int  GetScore(int item, int player_index, int team_index = ifStore::team_A);
     virtual int  GetLastAction();
-    virtual QString get_perc( int item1, int item2, int player_index );
+    virtual QString get_perc( int item1, int item2, int player_index, int team_index = ifStore::team_A);
     virtual QString get_perc( int val1, int tot );
     virtual bool    isInStarting5(int pl_index);
     virtual int  get_current_gap();
 
-    virtual void SetScore(int item, int player_index, int action_sign, int param = 0);
+    virtual void SetScore(int item, int player_index, int team_index, int action_sign, int param = 0, int param2 = -1);
     virtual void store_match(QFile &data);
     virtual void store_pbp(QFile &data, playstat *scoreboard, std::vector<T_PlayerData> *players_registry);
     virtual void store_pbp_in_html(QFile &data, playstat *scoreboard, std::vector<T_PlayerData> *players_registry, QString charset);
